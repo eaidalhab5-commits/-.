@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الخيمة الرمضانية</title>
+<style>
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    /* خلفية لون واحد رمضانية */
+    background: linear-gradient(to bottom, #0b3d91, #0f2e6d);
+    color: #fff;
+    text-align: center;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.container {
+    background: rgba(0,0,0,0.6);
+    padding: 25px;
+    border-radius: 15px;
+    max-width: 700px;
+    margin: 40px auto;
+    animation: fadeIn 1s;
+}
+
+h1 {
+    margin-bottom: 30px;
+    font-size: 32px;
+    color: #f1c40f;
+}
+
+button {
+    display: block;
+    width: 80%;
+    margin: 12px auto;
+    padding: 12px;
+    font-size: 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    background-color: #f39c12;
+    color: #fff;
+    transition: transform 0.2s, background-color 0.3s;
+}
+
+button:hover {
+    background-color: #e67e22;
+    transform: scale(1.05);
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+.score-container {
+    margin-top: 25px;
+    animation: fadeIn 1.5s;
+}
+
+.score-text {
+    font-size: 28px;
+    margin-bottom: 15px;
+    transition: transform 0.5s;
+}
+
+.progress-bar {
+    width: 90%;
+    background: rgba(255,255,255,0.3);
+    border-radius: 25px;
+    margin: auto;
+    height: 30px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #f39c12, #27ae60);
+    border-radius: 25px;
+    transition: width 1s ease-in-out;
+}
+
+.star {
+    position: absolute;
+    font-size: 24px;
+    animation: star-fall 1s ease-in-out forwards;
+}
+
+.lantern {
+    position: absolute;
+    font-size: 32px;
+    animation: lantern-float 1s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {opacity:0;}
+    to {opacity:1;}
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+    40% {transform: translateY(-12px);}
+    60% {transform: translateY(-6px);}
+}
+
+@keyframes star-fall {
+    0% {transform: translateY(0) scale(1); opacity: 1;}
+    100% {transform: translateY(-200px) scale(1.5); opacity: 0;}
+}
+
+@keyframes lantern-float {
+    0% {transform: translateY(0) scale(1); opacity: 0;}
+    50% {opacity: 1; transform: translateY(-15px) scale(1.1);}
+    100% {transform: translateY(-30px) scale(1); opacity: 0;}
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="startScreen">
+    <h1>الخيمة الرمضانية<br>(مركز المضيبي الصحي)</h1>
+    <button onclick="startGame()">ابدأ اللعبة 🎮</button>
+</div>
+
+<div class="container" id="quiz" style="display:none;"></div>
+<div class="score-container" id="score"></div>
+
+<audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+<audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+
+<script>
+const questions = [
+    {q: "ما اسم الوجبة التي يأكلها المسلم قبل الفجر في رمضان؟", a: ["الإفطار", "الغداء", "السحور", "العشاء"], correct: 2},
+    {q: "ما حكم السحور؟", a: ["واجب", "سنة وفيه بركة", "مكروه", "محرم"], correct: 1},
+    {q: "بماذا يُستحب أن يفطر الصائم؟", a: ["العصير فقط", "الحلويات", "التمر والماء", "القهوة"], correct: 2},
+    {q: "متى فُرض صيام رمضان؟", a: ["السنة الأولى للهجرة", "السنة الثانية للهجرة", "السنة الخامسة للهجرة", "السنة العاشرة للهجرة"], correct: 1},
+    {q: "كم عدد ركعات صلاة التراويح عادةً؟", a: ["4 ركعات", "6 ركعات", "8 أو 20 ركعة", "30 ركعة"], correct: 2},
+    {q: "متى يُفضل أن يمارس الصائم الرياضة؟", a: ["وقت الظهيرة", "قبل الإفطار بقليل أو بعده", "أثناء السحور", "في أي وقت مع مجهود شديد"], correct: 1},
+    {q: "ماذا يفعل المريض إذا شعر بدوخة شديدة أثناء الصيام؟", a: ["يتجاهلها", "ينام فقط", "يفطر ويطلب المساعدة الطبية", "يمارس الرياضة"], correct: 2}
+];
+
+let current = 0;
+let score = 0;
+
+function startGame() {
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("quiz").style.display = "block";
+    document.getElementById("score").innerHTML = "";
+    current = 0;
+    score = 0;
+    loadQuestion();
+}
+
+function loadQuestion() {
+    if(current < questions.length) {
+        showLantern();
+        let q = questions[current];
+        let html = `<h2>${q.q}</h2>`;
+        q.a.forEach((answer, i) => {
+            html += `<button onclick="checkAnswer(${i}, this)">${answer}</button>`;
+        });
+        document.getElementById("quiz").innerHTML = html;
+    } else {
+        showScore();
+    }
+}
+
+// فوانيس تظهر عند كل سؤال
+function showLantern() {
+    let lantern = document.createElement('div');
+    lantern.classList.add('lantern');
+    lantern.style.left = `${Math.random()*80 + 10}%`;
+    lantern.style.top = `90%`;
+    lantern.innerHTML = "🏮";
+    document.body.appendChild(lantern);
+    setTimeout(()=>{lantern.remove();},1000);
+}
+
+function checkAnswer(i, btn) {
+    const correctSound = document.getElementById("correctSound");
+    const wrongSound = document.getElementById("wrongSound");
+
+    if(i === questions[current].correct) {
+        score++;
+        correctSound.play();
+        btn.style.backgroundColor = "#27ae60";
+    } else {
+        wrongSound.play();
+        btn.style.backgroundColor = "#c0392b";
+    }
+
+    btn.style.animation = "bounce 0.5s";
+    setTimeout(() => {
+        current++;
+        loadQuestion();
+    }, 600);
+}
+
+function showScore() {
+    document.getElementById("quiz").style.display = "none";
+    let scoreHTML = `
+        <div class="score-text">لقد حصلت على ${score} من 7</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <br>
+        <button onclick="startGame()">إعادة اللعب 🔄</button>
+        <button onclick="goHome()">الصفحة الرئيسية 🏠</button>
+    `;
+    if(score === 7) {
+        scoreHTML += `<div style="margin-top:15px;font-size:24px;color:#f1c40f;">مبروك! يمكنك أخذ الهدية 🎁</div>`;
+        createStars(7);
+    }
+    document.getElementById("score").innerHTML = scoreHTML;
+
+    setTimeout(() => {
+        const fill = document.getElementById("progressFill");
+        fill.style.width = `${(score/7)*100}%`;
+    }, 200);
+}
+
+function goHome() {
+    document.getElementById("score").innerHTML = "";
+    document.getElementById("quiz").style.display = "none";
+    document.getElementById("startScreen").style.display = "block";
+}
+
+function createStars(count) {
+    for(let i=0;i<count;i++){
+        let star = document.createElement('div');
+        star.classList.add('star');
+        star.style.left = `${20 + i*10}%`;
+        star.style.top = `80%`;
+        star.innerHTML = "⭐";
+        document.body.appendChild(star);
+        setTimeout(()=>{star.remove();},1200);
+    }
+}
+</script>
+</body>
+</html>
